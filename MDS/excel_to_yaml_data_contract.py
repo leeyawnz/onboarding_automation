@@ -1,7 +1,6 @@
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
-import yaml
 
 # input statements
 workbook_name = input('Enter Excelsheet Name (.xlsx): ')
@@ -31,6 +30,15 @@ for col in range(1, 2):
             table_value = ws[char + str(row)].value
             table_value = table_value.lower()
             tablename_list.append(table_value)
+
+adjusted_tablename_list = []
+m = 0
+while m < len(tablename_list):
+    # if table name not in []
+    tablename_list[m] = tablename_list[m] + '_main'
+    adjusted_tablename_list.append(tablename_list[m])
+    m += 1
+print(adjusted_tablename_list)
 
 # Splitting tables in individual arrays
 sliced_full_tablename_list = []
@@ -114,7 +122,7 @@ while l < len(field_number_list):
     sliced_full_field_list[l] = str(sliced_full_field_list[l]).replace("'", "")
     with open(f'{appname}.txt', 'a') as file:
         yaml_template = f'''
-- tablename: {tablename_list[l]}
+- tablename: {adjusted_tablename_list[l]}
   columns: {sliced_full_field_list[l]}
   limit: null
   allow_aggregations: false
