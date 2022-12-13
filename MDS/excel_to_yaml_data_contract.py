@@ -2,9 +2,11 @@ import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-wb_name = "test.xlsx"
-data_tb_len = 99
-appname = 'test'
+# input statements
+workbook_name = input('Enter Excelsheet Name (.xlsx): ')
+data_table_length = input('Enter length of data (Last cell + 1): ')
+data_table_length = int(data_table_length)
+appname = input('Enter Application Team Name: ')
 
 # loading workbook
 wb = load_workbook(wb_name)
