@@ -11,7 +11,6 @@ appname = input('Enter Application Team Name: ')
 # loading workbook
 wb = load_workbook(wb_name)
 ws = wb.active
-# print(ws)
 
 # full table list including None
 full_tb_list = []
@@ -20,8 +19,6 @@ for col in range(1, 2):
     for row in range(2, data_tb_len):
         cell = ws[char + str(row)].value
         full_tb_list.append(cell)
-# print(full_tb_list)
-print(len(full_tb_list))
 
 # table list without None
 # Need to check which tables have _main and which does not
@@ -32,7 +29,6 @@ for col in range(1, 2):
         cell = ws[char + str(row)].value
         if cell != None:
             tb_list.append(cell.lower())
-print(tb_list)
 
 # full field list
 full_f_list = []
@@ -41,8 +37,6 @@ for col in range(2, 3):
     for row in range(2, data_tb_len):
         cell = ws[char + str(row)].value
         full_f_list.append(cell.lower())
-# print(full_f_list)
-print(len(full_f_list))
 
 # splitting full_tb_list to individual arrays
 ind_full_tb_list = []
