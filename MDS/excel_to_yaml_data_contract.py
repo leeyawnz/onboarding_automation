@@ -2,107 +2,68 @@ import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-# input statements
-workbook_name = input('Enter Excelsheet Name (.xlsx): ')
-data_table_length = input('Enter length of data (Last cell + 1): ')
-data_table_length = int(data_table_length)
-appname = input('Enter Application Team Name: ')
+wb_name = "test.xlsx"
+data_tb_len = 99
+appname = 'test'
 
 # loading workbook
-wb = load_workbook(workbook_name)
+wb = load_workbook(wb_name)
 ws = wb.active
+# print(ws)
 
-# Tablename related
-# Full list of tablenames including None
-full_tablename_list = []
+# full table list including None
+full_tb_list = []
 for col in range(1, 2):
     char = get_column_letter(col)
-    for row in range(2, data_table_length):
+    for row in range(2, data_tb_len):
         cell = ws[char + str(row)].value
-        full_tablename_list.append(cell)
+        full_tb_list.append(cell)
+# print(full_tb_list)
+print(len(full_tb_list))
 
-# Tablenames List for YAML
-tablename_list = []
+# table list without None
+# Need to check which tables have _main and which does not
+tb_list = []
 for col in range(1, 2):
     char = get_column_letter(col)
-    for row in range(2, data_table_length):
-        if ws[char + str(row)].value != None:
-            table_value = ws[char + str(row)].value
-            table_value = table_value.lower()
-            tablename_list.append(table_value)
+    for row in range(2, data_tb_len):
+        cell = ws[char + str(row)].value
+        if cell != None:
+            tb_list.append(cell.lower())
+print(tb_list)
 
-adjusted_tablename_list = []
-m = 0
-while m < len(tablename_list):
-    # if table name not in []
-    tablename_list[m] = tablename_list[m] + '_main'
-    adjusted_tablename_list.append(tablename_list[m])
-    m += 1
-print(adjusted_tablename_list)
-
-# Splitting tables in individual arrays
-sliced_full_tablename_list = []
-individual_tablename_list = []
-i = 0
-while i < len(full_tablename_list):
-    if i == 0:
-        individual_tablename_list.append(full_tablename_list[i])
-        i += 1
-    elif full_tablename_list[i] == None and full_tablename_list[i-1] != None:
-        individual_tablename_list.append(full_tablename_list[i])
-        i += 1    
-    elif full_tablename_list[i] == None and full_tablename_list[i-1] == None:
-        individual_tablename_list.append(full_tablename_list[i])
-        i += 1    
-    else:
-        sliced_full_tablename_list.append(individual_tablename_list)
-        individual_tablename_list = []
-        individual_tablename_list.append(full_tablename_list[i])
-        i += 1
-sliced_full_tablename_list.append(individual_tablename_list)
-
-# Getting length of each individual array in sliced table name list array
-table_name_number_list = []
-j = 0
-while j < len(sliced_full_tablename_list):
-    length = len(sliced_full_tablename_list[j])
-    table_name_number_list.append(length)
-    j += 1
-# print(table_name_number_list)
-
-# Fields related
-# Full List for fields
-full_field_list = []
+# full field list
+full_f_list = []
 for col in range(2, 3):
     char = get_column_letter(col)
-    for row in range(2, data_table_length):
+    for row in range(2, data_tb_len):
         cell = ws[char + str(row)].value
-        cell = cell.lower()
-        full_field_list.append(cell)
+        full_f_list.append(cell.lower())
+# print(full_f_list)
+print(len(full_f_list))
 
-# Splitting fields array to match tablename array
-k = 0
-sliced_full_field_list = []
-individual_field_list = []
-for i in range(len(table_name_number_list)):
-    k = 0
-    while k < table_name_number_list[i]:
-        individual_field_list.append(full_field_list[k])
-        k += 1
-    sliced_full_field_list.append(individual_field_list)
-    individual_field_list = []
-    k += table_name_number_list[i]
+# splitting full_tb_list to individual arrays
+ind_full_tb_list = []
+ind_tb_list = []
+i = 0
+while i < len(full_tb_list):
+    if i == 0:
+        ind_tb_list.append(full_f_list[i])
+        i += 1
+    elif full_tb_list[i] == None and full_tb_list[i - 1] != None:
+        ind_tb_list.append(full_f_list[i])
+        i += 1
+    elif full_tb_list[i] == None and full_tb_list[i - 1] == None:
+        ind_tb_list.append(full_f_list[i])
+        i += 1
+    else:
+        ind_full_tb_list.append(ind_tb_list)
+        ind_tb_list = []
+        ind_tb_list.append(full_f_list[i])
+        i += 1
+ind_full_tb_list.append(ind_tb_list)
 
-# Getting length of each individual array in sliced field list array
-field_number_list = []
-j = 0
-while j < len(sliced_full_field_list):
-    length = len(sliced_full_field_list[j])
-    field_number_list.append(length)
-    j += 1
-# print(field_number_list)
-
-# YAML formatting
+# yaml file
 with open(f'{appname}.txt', 'a') as file:
     yaml_header = '''
 ---
@@ -113,23 +74,22 @@ filter: {
 }
 
 table:
-    '''
+'''
     file.write(yaml_header)
 
-
-l = 0
-while l < len(field_number_list):
-    sliced_full_field_list[l] = str(sliced_full_field_list[l]).replace("'", "")
+j = 0
+while j < len(tb_list):
+    ind_full_tb_list[j] = str(ind_full_tb_list[j]).replace("'", "")
     with open(f'{appname}.txt', 'a') as file:
         yaml_template = f'''
-- tablename: {adjusted_tablename_list[l]}
-  columns: {sliced_full_field_list[l]}
+- tablename: {tb_list[j]}
+  columns: {ind_full_tb_list[j]}
   limit: null
   allow_aggregations: false
 '''
         file.write(yaml_template)
-        l += 1
+        j += 1
 
-old_file_name = os.path.join('.', f'{appname}.txt')
-new_file_name = old_file_name.replace('.txt', '.yaml')
-os.rename(old_file_name, new_file_name)
+txt_file = os.path.join('.', f'{appname}.txt')
+yaml_file = txt_file.replace('.txt', '.yaml')
+os.rename(txt_file, yaml_file)
