@@ -3,9 +3,9 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
 # input statements
-workbook_name = input('Enter Excelsheet Name (.xlsx): ')
-data_table_length = input('Enter length of data (Last cell + 1): ')
-data_table_length = int(data_table_length)
+wb_name = input('Enter Excelsheet Name (.xlsx): ')
+data_tb_len = input('Enter length of data (Last cell + 1): ')
+data_tb_len = int(data_tb_len)
 appname = input('Enter Application Team Name: ')
 
 # loading workbook
