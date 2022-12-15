@@ -30,7 +30,7 @@ while i < len(full_template_list):
   querytemplate: '{full_template_list[i]}'
   pk:
   appid: {appname}
-  paramValueSchema:
+  paramValuesSchema:
   required:
 """
         file.write(yaml_template)
