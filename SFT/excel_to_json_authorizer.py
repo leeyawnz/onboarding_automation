@@ -1,14 +1,16 @@
-# import statements
+# Import statements
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-# constants
+# Constants
 wb_name = input('Insert excelsheet file name (.xlsx): ')
 env = input('what SFT environment is this?: ')
 appname = input('Insert app team name: ')
+http_callback = input('Insert HttpCallback URL: ')
+sns_callback = input('Insert SNSCallback URL: ')
 
-# loading workbook
+# Loading workbook
 wb = load_workbook(wb_name)
 ws = wb.active
 
@@ -40,15 +42,22 @@ def sft_template(appname, array, i):
             "PutRequest": {{
                 "Item": {{
                     "pk": {{
-                        "s": "{appname}#{array[i]}"
+                        "S": "{appname}#{array[i]}"
                     }},
                     "pkstatus": {{
-                        "s": true
+                        "S": "true"
+                    }},
+                    "httpCallback": {{
+                        "S": "{http_callback}"
+                    }},
+                    "callback": {{
+                        "S": "{sns_callback}"
                     }}
                 }}
             }}
         }}'''
     return sft_entry
+
 
 # SFT JSON script
 sft_array_length = get_length(1, 2)
