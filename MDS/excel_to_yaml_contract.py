@@ -6,6 +6,8 @@ from openpyxl.utils import get_column_letter
 # Input statements
 wb_name = input('Insert excelsheet file name (.xlsx): ')
 appname = input('Insert app team name: ')
+persg = input('Insert population: ')
+werks = input('Insert service (with " "): ')
 
 # Loading workbook
 wb = load_workbook(wb_name)
@@ -64,8 +66,8 @@ table_title_array = list(map(lambda item: item.lower(), table_title_array))
 yaml_header = f'''---
 role: [{appname}]
 filter: {{
-    it0001_persg: [],
-    it0001_werks: []
+    it0001_persg: [{persg}],
+    it0001_werks: [{werks}]
 }}
 
 table:'''
@@ -74,7 +76,7 @@ j = 0
 while j < len(table_title_array):
     full_split_fields_array[j] = str(full_split_fields_array[j]).replace("'", "")
     yaml_entry = f'''
--   tablename: {table_title_array[j]}
+-   tablename: {table_title_array[j]}_main
     columns: {full_split_fields_array[j]}
     limit: null
     allow_aggregations: false
