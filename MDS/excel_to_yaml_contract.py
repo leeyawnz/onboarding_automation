@@ -1,90 +1,90 @@
+# Importing statements
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-# input statements
-wb_name = input('Enter Excelsheet Name (.xlsx): ')
-data_tb_len = input('Enter length of data (Last cell + 1): ')
-data_tb_len = int(data_tb_len)
-appname = input('Enter Application Team Name: ')
+# Input statements
+wb_name = input('Insert excelsheet file name (.xlsx): ')
+appname = input('Insert app team name: ')
 
-# loading workbook
+# Loading workbook
 wb = load_workbook(wb_name)
 ws = wb.active
 
-# full table list including None
-full_tb_list = []
-for col in range(1, 2):
-    char = get_column_letter(col)
-    for row in range(2, data_tb_len):
-        cell = ws[char + str(row)].value
-        full_tb_list.append(cell)
+# Functions
+def get_length(a, b):
+    for col in range(a, b):
+        char = get_column_letter(col)
+        i = 1
+        while True:
+            cell = ws[char + str(i)].value
+            if cell == None:
+                return i
+            else:
+                i += 1
+    return i
 
-# table list without None
-# Need to check which tables have _main and which does not
-tb_list = []
-for col in range(1, 2):
-    char = get_column_letter(col)
-    for row in range(2, data_tb_len):
-        cell = ws[char + str(row)].value
-        if cell != None:
-            tb_list.append(cell.lower())
+def get_array(a, b, end_of_row):
+    array = []
+    for col in range(a, b):
+        char = get_column_letter(col)
+        for row in range(1, end_of_row):
+            cell = ws[char + str(row)].value
+            array.append(cell)
+    return array
 
-# full field list
-full_f_list = []
-for col in range(2, 3):
-    char = get_column_letter(col)
-    for row in range(2, data_tb_len):
-        cell = ws[char + str(row)].value
-        full_f_list.append(cell.lower())
+# MDS YAML script
+fields_length = get_length(2, 3)
+fields_array = get_array(2, 3, fields_length)
+table_array = get_array(1, 2, fields_length)
 
-# splitting full_tb_list to individual arrays
-ind_full_tb_list = []
-ind_tb_list = []
+full_split_fields_array = []
+ind_fields_array = []
 i = 0
-while i < len(full_tb_list):
+while i < fields_length - 1:
     if i == 0:
-        ind_tb_list.append(full_f_list[i])
+        ind_fields_array.append(fields_array[i].lower())
         i += 1
-    elif full_tb_list[i] == None and full_tb_list[i - 1] != None:
-        ind_tb_list.append(full_f_list[i])
+    elif table_array[i] == None and table_array[i - 1] != None:
+        ind_fields_array.append(fields_array[i].lower())
         i += 1
-    elif full_tb_list[i] == None and full_tb_list[i - 1] == None:
-        ind_tb_list.append(full_f_list[i])
+    elif table_array[i] == None and table_array[i - 1] == None:
+        ind_fields_array.append(fields_array[i].lower())
         i += 1
     else:
-        ind_full_tb_list.append(ind_tb_list)
-        ind_tb_list = []
-        ind_tb_list.append(full_f_list[i])
+        full_split_fields_array.append(ind_fields_array)
+        ind_fields_array = []
+        ind_fields_array.append(fields_array[i].lower())
         i += 1
-ind_full_tb_list.append(ind_tb_list)
+full_split_fields_array.append(ind_fields_array)
 
-# yaml file
-with open(f'{appname}.txt', 'a') as file:
-    yaml_header = '''
----
-role: []
-filter: {
+table_title_array = list(filter(lambda item: item is not None, table_array))
+table_title_array = list(map(lambda item: item.lower(), table_title_array))
+
+yaml_header = f'''---
+role: [{appname}]
+filter: {{
     it0001_persg: [],
     it0001_werks: []
-}
+}}
 
-table:
-'''
-    file.write(yaml_header)
+table:'''
 
 j = 0
-while j < len(tb_list):
-    ind_full_tb_list[j] = str(ind_full_tb_list[j]).replace("'", "")
-    with open(f'{appname}.txt', 'a') as file:
-        yaml_template = f'''
-- tablename: {tb_list[j]}
-  columns: {ind_full_tb_list[j]}
-  limit: null
-  allow_aggregations: false
+while j < len(table_title_array):
+    full_split_fields_array[j] = str(full_split_fields_array[j]).replace("'", "")
+    yaml_entry = f'''
+-   tablename: {table_title_array[j]}
+    columns: {full_split_fields_array[j]}
+    limit: null
+    allow_aggregations: false
 '''
-        file.write(yaml_template)
-        j += 1
+    yaml_header += yaml_entry
+    j += 1
+
+print(yaml_header)
+with open(f'{appname}.txt', 'w') as file:
+    file.write(yaml_header)
 
 txt_file = os.path.join('.', f'{appname}.txt')
 yaml_file = txt_file.replace('.txt', '.yaml')
