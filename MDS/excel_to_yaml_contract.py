@@ -1,93 +1,98 @@
-# Importing statements
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-# Input statements
-wb_name = input('Insert excelsheet file name (.xlsx): ')
-appname = input('Insert app team name: ')
-persg = input('Insert population: ')
-werks = input('Insert service (with " "): ')
-
-# Loading workbook
-wb = load_workbook(wb_name)
-ws = wb.active
-
 # Functions
-def get_length(a, b):
+def workbookName():
+    path = './excels/'
+    for file in os.listdir(path):
+        if (os.path.isfile(os.path.join(path, file)) and ".xlsx" in file):
+            xlsx_file = path + file
+            return xlsx_file
+
+def getLengthOfArray(a, b):
     for col in range(a, b):
         char = get_column_letter(col)
         i = 1
         while True:
-            cell = ws[char + str(i)].value
+            cell = activeWorksheet[char + str(i)].value
             if cell == None:
                 return i
             else:
                 i += 1
     return i
 
-def get_array(a, b, end_of_row):
+def getArrayItems(a, b, end_of_row):
     array = []
     for col in range(a, b):
         char = get_column_letter(col)
-        for row in range(1, end_of_row):
-            cell = ws[char + str(row)].value
+        for row in range(2, end_of_row):
+            cell = activeWorksheet[char + str(row)].value
             array.append(cell)
     return array
 
-# MDS YAML script
-fields_length = get_length(2, 3)
-fields_array = get_array(2, 3, fields_length)
-table_array = get_array(1, 2, fields_length)
+# Loading xlsx
+workbookName = workbookName()
+loadingWorkbook = load_workbook(workbookName)
+activeWorksheet = loadingWorkbook.active
 
-full_split_fields_array = []
-ind_fields_array = []
+# Getting array of items
+appname = workbookName.split("/")[-1]
+appname = appname.split(".")[0]
+length = getLengthOfArray(2, 3)
+pureTableArray = getArrayItems(1, 2, length)
+editedTableArray = list(filter(lambda item: item is not None, pureTableArray))
+editedTableArray = list(map(lambda item: item.lower(), editedTableArray))
+fieldsArray = getArrayItems(2, 3, length)
+
+fieldsArrayOfArrays = []
+splitFieldsArray = []
 i = 0
-while i < fields_length - 1:
+while i < len(fieldsArray):
     if i == 0:
-        ind_fields_array.append(fields_array[i].lower())
+        splitFieldsArray.append(fieldsArray[i].lower())
         i += 1
-    elif table_array[i] == None and table_array[i - 1] != None:
-        ind_fields_array.append(fields_array[i].lower())
+    elif pureTableArray[i] == None and pureTableArray[i - 1] == None:
+        splitFieldsArray.append(fieldsArray[i].lower())
         i += 1
-    elif table_array[i] == None and table_array[i - 1] == None:
-        ind_fields_array.append(fields_array[i].lower())
+    elif pureTableArray[i] == None and pureTableArray[i - 1] != None:
+        splitFieldsArray.append(fieldsArray[i].lower())
         i += 1
     else:
-        full_split_fields_array.append(ind_fields_array)
-        ind_fields_array = []
-        ind_fields_array.append(fields_array[i].lower())
+        fieldsArrayOfArrays.append(splitFieldsArray)
+        splitFieldsArray = []
+        splitFieldsArray.append(fieldsArray[i].lower())
         i += 1
-full_split_fields_array.append(ind_fields_array)
+fieldsArrayOfArrays.append(splitFieldsArray)
 
-table_title_array = list(filter(lambda item: item is not None, table_array))
-table_title_array = list(map(lambda item: item.lower(), table_title_array))
-
-yaml_header = f'''---
+# MDS data contract YAML file
+yamlFile = f'''---
 role: [{appname}]
 filter: {{
-    it0001_persg: [{persg}],
-    it0001_werks: [{werks}]
+    it0001_persg: [],
+    it0001_werks: []
 }}
 
 table:'''
 
 j = 0
-while j < len(table_title_array):
-    full_split_fields_array[j] = str(full_split_fields_array[j]).replace("'", "")
-    yaml_entry = f'''
--   tablename: {table_title_array[j]}_main
-    columns: {full_split_fields_array[j]}
+while j < len(editedTableArray):
+    fieldsArrayOfArrays[j] = str(fieldsArrayOfArrays[j]).replace("'","")
+    yamlEntry = f'''
+-   tablename: {editedTableArray[j]}_main
+    columns: {fieldsArrayOfArrays[j]}
     limit: null
     allow_aggregations: false
 '''
-    yaml_header += yaml_entry
+    yamlFile += yamlEntry
     j += 1
 
-print(yaml_header)
-with open(f'{appname}.txt', 'w') as file:
-    file.write(yaml_header)
+# Creating data contract YAML file
+with open('./artifacts/mds_datacontract.txt', 'w') as file:
+    file.write(yamlFile)
 
-txt_file = os.path.join('.', f'{appname}.txt')
+txt_file = os.path.join('./artifacts/', 'mds_datacontract.txt')
 yaml_file = txt_file.replace('.txt', '.yaml')
 os.rename(txt_file, yaml_file)
+
+print('MDS Data Contract: File Generation Completed')
