@@ -1,6 +1,7 @@
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
+from datetime import datetime
 
 # Functions
 def workbookName():
@@ -66,7 +67,8 @@ while i < len(fieldsArray):
 fieldsArrayOfArrays.append(splitFieldsArray)
 
 # MDS data contract YAML file
-yamlFile = f'''---
+yamlFile = f'''# {datetime.now()}
+---
 role: [{appname}]
 filter: {{
     it0001_persg: [],
