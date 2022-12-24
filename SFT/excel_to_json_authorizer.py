@@ -1,43 +1,46 @@
-# Import statements
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 
-# Constants
-wb_name = input('Insert excelsheet file name (.xlsx): ')
-env = input('what SFT environment is this?: ')
-appname = input('Insert app team name: ')
-http_callback = input('Insert HttpCallback URL: ')
-sns_callback = input('Insert SNSCallback URL: ')
-
-# Loading workbook
-wb = load_workbook(wb_name)
-ws = wb.active
-
 # Functions
-def get_length(a, b):
+def workbookName():
+    path = './excels/'
+    for file in os.listdir(path):
+        if (os.path.isfile(os.path.join(path, file)) and ".xlsx" in file):
+            xlsx_file = path + file
+            print("Detected: " + xlsx_file)
+            return xlsx_file
+
+def getLengthOfArray(a, b):
     for col in range(a, b):
         char = get_column_letter(col)
         i = 1
         while True:
-            cell = ws[char + str(i)].value
+            cell = activeWorksheet[char + str(i)].value
             if cell == None:
                 return i
             else:
                 i += 1
     return i
 
-def get_array(a, b, end_of_row):
+def getArrayItems(a, b, end_of_row):
     array = []
     for col in range(a, b):
         char = get_column_letter(col)
-        for row in range(1, end_of_row):
-            cell = ws[char + str(row)].value
+        for row in range(2, end_of_row):
+            cell = activeWorksheet[char + str(row)].value
             array.append(cell)
     return array
 
-def sft_template(appname, array, i):
-    sft_entry = f'''
+def editSFTArray(array):
+    cleanArray = []
+    for item in array:
+        entry = item.split(" ")[0]
+        cleanArray.append(entry)
+    return cleanArray
+
+def sftEntry(appname, array, httpCallbackArray, snsCallbackArray, i):
+    sftEntry = f'''
         {{
             "PutRequest": {{
                 "Item": {{
@@ -48,40 +51,53 @@ def sft_template(appname, array, i):
                         "S": "true"
                     }},
                     "httpCallback": {{
-                        "S": "{http_callback}"
+                        "S": "{httpCallbackArray[0]}"
                     }},
                     "callback": {{
-                        "S": "{sns_callback}"
+                        "S": "{snsCallbackArray[0]}"
                     }}
                 }}
             }}
         }}'''
-    return sft_entry
+    return sftEntry
 
+# Loading xlsx
+workbookName = workbookName()
+loadingWorkbook = load_workbook(workbookName)
+activeWorksheet = loadingWorkbook.active
 
-# SFT JSON script
-sft_array_length = get_length(1, 2)
-sft_array = get_array(1, 2, sft_array_length)
-sft_body = sft_template(appname, sft_array, 1) + ','
-sft_header = f'''{{
-    "sft-authorizer-{env}": ['''
-sft_footer = f'''
+# Getting array of items
+appname = workbookName.split("/")[-1]
+appname = appname.split(".")[0]
+httpCallback = ""
+snsCallback = ""
+length = getLengthOfArray(5, 6)
+pureEntryArray = getArrayItems(5, 6, length)
+editedEntryArray = editSFTArray(pureEntryArray)
+httpCallbackEntry = getArrayItems(6, 7, 3)
+snsCallbackEntry = getArrayItems(7, 8, 3)
+
+# SFT JSON file
+sftFile = '''{
+    "sft-authorizer-sit": ['''
+sftFooter = '''
     ]
-}}'''
+}'''
 
 i = 0
-while i < sft_array_length - 1:
-    if i != sft_array_length - 2:
-        sft_header += sft_template(appname, sft_array, i) + ','
+while i < len(editedEntryArray):
+    if i != len(editedEntryArray) - 1:
+        sftFile += sftEntry(appname, editedEntryArray, httpCallbackEntry, snsCallbackEntry, i) + ','
         i += 1
     else:
-        sft_header += sft_template(appname, sft_array, i)
+        sftFile += sftEntry(appname, editedEntryArray, httpCallbackEntry, snsCallbackEntry, i)
         i += 1
-sft_header += sft_footer
+sftFile += sftFooter
 
-with open(f'{appname}.txt', 'a') as file:
-    file.write(sft_header)
+# Creating JSON file
+with open('./artifacts/sft.txt', 'w') as file:
+    file.write(sftFile)
 
-txt_file = os.path.join('.', f'{appname}.txt')
+txt_file = os.path.join('./artifacts/', 'sft.txt')
 json_file = txt_file.replace('.txt', '.json')
 os.rename(txt_file, json_file)
