@@ -8,7 +8,6 @@ def workbookName():
     for file in os.listdir(path):
         if (os.path.isfile(os.path.join(path, file)) and ".xlsx" in file):
             xlsx_file = path + file
-            print("Detected: " + xlsx_file)
             return xlsx_file
 
 def getLengthOfArray(a, b):
@@ -69,8 +68,6 @@ activeWorksheet = loadingWorkbook.active
 # Getting array of items
 appname = workbookName.split("/")[-1]
 appname = appname.split(".")[0]
-httpCallback = ""
-snsCallback = ""
 length = getLengthOfArray(5, 6)
 pureEntryArray = getArrayItems(5, 6, length)
 editedEntryArray = editSFTArray(pureEntryArray)
@@ -101,3 +98,5 @@ with open('./artifacts/sft.txt', 'w') as file:
 txt_file = os.path.join('./artifacts/', 'sft.txt')
 json_file = txt_file.replace('.txt', '.json')
 os.rename(txt_file, json_file)
+
+print('SFT: File Generation Completed')
